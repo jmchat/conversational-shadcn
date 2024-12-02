@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "../store/cartStore";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import Image from 'next/image';
 
 interface CartProps {
   open: boolean;
@@ -49,10 +50,12 @@ export function Cart({ open, onOpenChange }: CartProps) {
                 className="flex items-center space-x-4 mb-6 last:mb-0"
               >
                 <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted">
-                  <img
+                  <Image
                     src={item.product.imageUrl}
                     alt={item.product.name}
-                    className="object-cover w-full h-full"
+                    width={50}
+                    height={50}
+                    style={{ objectFit: 'contain' }}
                   />
                 </div>
                 <div className="flex-1 min-w-0">

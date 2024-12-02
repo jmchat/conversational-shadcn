@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { OpenAIError } from 'openai/error';
 import { Message } from '@/lib/ai/types';
 
 const openai = new OpenAI({
@@ -7,8 +8,8 @@ const openai = new OpenAI({
 });
 
 export async function POST(request: Request) {
-  console.log('🚀 API route called');
   try {
+    console.log('🚀 API route called');
     const { messages } = await request.json();
     console.log('📨 Received messages:', JSON.stringify(messages, null, 2));
 
@@ -44,7 +45,12 @@ export async function POST(request: Request) {
 
     const openAIConfig = {
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',  // Fallback naar gpt-4o-mini als env var niet bestaat
-      messages: openAIMessages,
+      messages: openAIMessages.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+      temperature: 0.7,
+      max_tokens: 500,
       functions: [{
         name: 'process_user_input',
         description: 'Process user input and determine intent, actions, and response',
@@ -185,21 +191,21 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('❌ Error in chat API:', error);
+    console.error('OpenAI API Error:', error);
+    
+    // Check if error is an APIError with status
+    if (error instanceof Error && 'status' in error) {
+      const statusError = error as { status: number };
+      if (statusError.status === 429) {
+        return NextResponse.json(
+          { error: 'Rate limit exceeded. Please try again later.' },
+          { status: 429 }
+        );
+      }
+    }
+    
     return NextResponse.json(
-      {
-        intent: {
-          type: 'UNKNOWN',
-          confidence: 0,
-        },
-        actions: [],
-        immediateResponse: {
-          message: "Sorry, I'm having trouble processing your request. Could you please try again?",
-          tone: 'apologetic',
-          shouldBlock: false,
-        },
-        context: {},
-      },
+      { error: 'An error occurred while processing your request' },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import { ApiProduct, Product, ProductService } from "@/types/product";
+import { ApiProduct, Product, ProductService, FilterOptions } from "@/types/product";
 
 const API_BASE_URL = "https://fakestoreapi.com";
 
@@ -72,66 +72,52 @@ export class FakeStoreApiService implements ProductService {
     }
   }
 
-  async getFilteredProducts(filters: {
-    productType?: string;
-    category?: string;
-    search?: string;
-    features?: string[];
-    priceRange?: { min?: number; max?: number; }
-  }): Promise<Product[]> {
+  async getFilteredProducts(options: FilterOptions): Promise<Product[]> {
     try {
-      // Fetch all products first
-      const allProducts = await this.getProducts();
-      
+      let products = await this.getProducts();
+
       // Apply filters
-      return allProducts.filter(product => {
-        let matches = true;
-        
-        // Product type filtering
-        if (filters.productType) {
-          const searchTerm = filters.productType.toLowerCase();
-          matches = matches && (
-            product.category.toLowerCase().startsWith(searchTerm) ||
-            product.name.toLowerCase().startsWith(searchTerm)
-          );
-        }
+      if (options.category) {
+        products = products.filter(p => p.category.toLowerCase() === options.category?.toLowerCase());
+      }
 
-        // Category filtering
-        if (filters.category && matches) {
-          matches = product.category.toLowerCase() === filters.category.toLowerCase();
-        }
+      if (options.search) {
+        const searchLower = options.search.toLowerCase();
+        products = products.filter(p => 
+          p.name.toLowerCase().includes(searchLower) || 
+          p.description.toLowerCase().includes(searchLower)
+        );
+      }
 
-        // Search term filtering
-        if (filters.search && matches) {
-          const searchTerms = filters.search.toLowerCase().split(/\s+/);
-          matches = matches && searchTerms.every(term =>
-            product.name.toLowerCase().includes(term) ||
-            product.description.toLowerCase().includes(term)
-          );
-        }
+      if (options.productType) {
+        products = products.filter(p => p.category.toLowerCase().includes(options.productType?.toLowerCase() || ''));
+      }
 
-        // Feature filtering
-        if (filters.features && filters.features.length > 0 && matches) {
-          matches = matches && filters.features.every(feature =>
-            product.description.toLowerCase().includes(feature.toLowerCase()) ||
-            product.name.toLowerCase().includes(feature.toLowerCase())
-          );
-        }
+      if (options.features) {
+        products = products.filter(p => 
+          options.features?.some(feature => 
+            p.description.toLowerCase().includes(feature.toLowerCase())
+          )
+        );
+      }
 
-        // Price range filtering
-        if (filters.priceRange && matches) {
-          if (filters.priceRange.min !== undefined) {
-            matches = matches && product.price >= filters.priceRange.min;
-          }
-          if (filters.priceRange.max !== undefined) {
-            matches = matches && product.price <= filters.priceRange.max;
-          }
-        }
+      if (options.priceRange) {
+        products = products.filter(p => {
+          const { min, max } = options.priceRange || {};
+          if (min !== undefined && p.price < min) return false;
+          if (max !== undefined && p.price > max) return false;
+          return true;
+        });
+      }
 
-        return matches;
-      });
+      // Apply limit if specified
+      if (options.limit !== undefined) {
+        products = products.slice(0, options.limit);
+      }
+
+      return products;
     } catch (error) {
-      console.error('Error fetching filtered products:', error);
+      console.error('Error filtering products:', error);
       throw error;
     }
   }

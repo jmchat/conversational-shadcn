@@ -1,10 +1,11 @@
 import { Action, ActionType } from './types';
 import { productService } from '@/services/fakeStoreApi';
+import { Product } from '@/types/product';
 
-type ActionHandler = (parameters: Record<string, any>) => Promise<void>;
+type ActionHandler<T = void> = (parameters: Record<string, any>) => Promise<T>;
 
 export class ActionOrchestrator {
-  private handlers: Map<ActionType, ActionHandler>;
+  private handlers: Map<ActionType, ActionHandler<any>>;
 
   constructor() {
     this.handlers = new Map();
@@ -18,29 +19,19 @@ export class ActionOrchestrator {
       
       // Use the new filtered products method
       console.log('🎯 Filtering with productType:', productType);
-      const filtered = await productService.getFilteredProducts({
+      return await productService.getFilteredProducts({
         category,
-        productType,
+        limit,
         search,
+        productType,
         features,
         priceRange
       });
-
-      console.log('📦 Filtered products:', filtered);
-
-      // Apply limit if specified
-      const limitedResults = limit ? filtered.slice(0, limit) : filtered;
-
-      // Here we'll need to integrate with the UI to actually show the products
-      console.log('Showing filtered products:', limitedResults);
-      return limitedResults;
     });
 
     this.handlers.set('SHOW_PRODUCT_DETAILS', async (parameters) => {
       const { productId } = parameters;
-      const product = await productService.getProduct(productId);
-      // Implementation for showing product details
-      console.log('Showing product details:', product);
+      return await productService.getProduct(productId);
     });
 
     this.handlers.set('UPDATE_CART', async (parameters) => {
@@ -52,32 +43,33 @@ export class ActionOrchestrator {
     // Add more handlers as needed
   }
 
-  registerHandler(type: ActionType, handler: ActionHandler) {
+  registerHandler(type: ActionType, handler: ActionHandler<any>) {
     this.handlers.set(type, handler);
   }
 
-  async executeAction(action: Action): Promise<void> {
-    const handler = this.handlers.get(action.type);
-    if (!handler) {
-      console.warn(`No handler registered for action type: ${action.type}`);
-      return;
-    }
+  public async executeActions(actions: Action[]): Promise<void> {
+    // Sort actions by priority if needed
+    const sortedActions = [...actions].sort((a, b) => 
+      (a.priority || 0) - (b.priority || 0)
+    );
 
-    try {
-      await handler(action.parameters);
-    } catch (error) {
-      console.error(`Error executing action ${action.type}:`, error);
-      throw error;
+    // Execute actions in sequence
+    for (const action of sortedActions) {
+      try {
+        await this.handleAction(action);
+      } catch (error) {
+        console.error(`Error executing action ${action.type}:`, error);
+        throw error;
+      }
     }
   }
 
-  async executeActions(actions: Action[]): Promise<void> {
-    // Sort actions by priority
-    const sortedActions = [...actions].sort((a, b) => a.priority - b.priority);
-
-    for (const action of sortedActions) {
-      await this.executeAction(action);
+  public async handleAction(action: Action): Promise<any> {
+    const handler = this.handlers.get(action.type);
+    if (!handler) {
+      throw new Error(`No handler registered for action type: ${action.type}`);
     }
+    return await handler(action.parameters || {});
   }
 }
 

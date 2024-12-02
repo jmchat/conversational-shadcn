@@ -5,6 +5,7 @@ export type IntentType =
   | 'COMPARISON'
   | 'CART_ACTION'
   | 'GREETING'
+  | 'ERROR'
   | 'UNKNOWN';
 
 export type ActionType =

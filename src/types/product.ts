@@ -27,10 +27,23 @@ export interface Product {
   rating: ProductRating;
 }
 
+export interface FilterOptions {
+  productType?: string;
+  category?: string;
+  search?: string;
+  features?: string[];
+  priceRange?: {
+    min?: number;
+    max?: number;
+  };
+  limit?: number;
+}
+
 // This helps us maintain flexibility if we switch APIs
 export interface ProductService {
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product>;
   getCategories(): Promise<string[]>;
   getProductsByCategory(category: string): Promise<Product[]>;
+  getFilteredProducts(options: FilterOptions): Promise<Product[]>;
 }

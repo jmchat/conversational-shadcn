@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import ReactMarkdown from 'react-markdown';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 import {
   Sheet,
   SheetContent,
@@ -318,6 +315,95 @@ function Home() {
   const [isChatStarted, setIsChatStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleCategoryClick = useCallback(async (category: string) => {
+    setSelectedCategory(category);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { 
+        id: prevMessages.length + 1, 
+        sender: "user", 
+        message: `Show me products in ${category}` 
+      },
+      {
+        id: prevMessages.length + 2,
+        sender: "bot",
+        message: `Here are the products in ${category}:`,
+        content: <ProductsDisplay category={category} />
+      },
+    ]);
+  }, []);
+
+  const handleCategoriesClick = useCallback(async () => {
+    try {
+      const categories = await productService.getCategories();
+      const categoryList = categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join('\n');
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: prevMessages.length + 1, sender: "user", message: "Show me the product categories" },
+        { 
+          id: prevMessages.length + 2, 
+          sender: "bot", 
+          message: `Here are our product categories:\n${categoryList}`,
+          content: <CategoryButtons categories={categories} onCategoryClick={handleCategoryClick} />
+        },
+      ]);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: prevMessages.length + 1, sender: "user", message: "Show me the product categories" },
+        { 
+          id: prevMessages.length + 2, 
+          sender: "bot", 
+          message: "Sorry, I couldn't fetch the categories at the moment. Please try again later." 
+        },
+      ]);
+    }
+  }, [handleCategoryClick]);
+
+  const handleSupportClick = useCallback(() => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: prevMessages.length + 1, sender: "user", message: "I need support" },
+      {
+        id: prevMessages.length + 2,
+        sender: "bot",
+        message: "I'm here to help! What do you need assistance with?",
+      },
+    ]);
+  }, []);
+
+  const handleProductsClick = useCallback(() => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: prevMessages.length + 1, sender: "user", message: "Show me all products" },
+      { 
+        id: prevMessages.length + 2, 
+        sender: "bot", 
+        message: "Here are all our products:",
+        content: <ProductsDisplay />
+      },
+    ]);
+  }, []);
+
+  const handleButtonClick = useCallback((buttonName: string) => {
+    if (!isChatStarted) {
+      setIsChatStarted(true);
+    }
+    
+    switch (buttonName.toLowerCase()) {
+      case "products":
+        handleProductsClick();
+        break;
+      case "categories":
+        handleCategoriesClick();
+        break;
+      case "support":
+        handleSupportClick();
+        break;
+    }
+  }, [isChatStarted, handleProductsClick, handleCategoriesClick, handleSupportClick]);
+
   useEffect(() => {
     const handleHeaderButtonClick = (event: CustomEvent) => {
       const buttonType = event.detail;
@@ -328,7 +414,13 @@ function Home() {
     return () => {
       window.removeEventListener('headerButtonClick', handleHeaderButtonClick as EventListener);
     };
-  }, [handleHeaderButtonClick]);
+  }, [handleButtonClick]);
+
+  useEffect(() => {
+    if (!isChatStarted) {
+      handleButtonClick("products");
+    }
+  }, [handleButtonClick, isChatStarted]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -347,79 +439,7 @@ function Home() {
     return () => clearTimeout(timer);
   }, [messages, scrollToBottom]);
 
-  const handleProductsClick = () => {
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { id: prevMessages.length + 1, sender: "user", message: "Show me your products" },
-      { 
-        id: prevMessages.length + 2, 
-        sender: "bot", 
-        message: "Here are our latest products:",
-        content: <ProductsDisplay />
-      },
-    ]);
-  };
-
-  const handleCategoryClick = async (category: string) => {
-    setSelectedCategory(category);
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { 
-        id: prevMessages.length + 1, 
-        sender: "user", 
-        message: `Show me ${category} products` 
-      },
-      { 
-        id: prevMessages.length + 2, 
-        sender: "bot", 
-        message: `Here are our ${category} products:`,
-        content: <ProductsDisplay category={category} />
-      },
-    ]);
-  };
-
-  const handleCategoriesClick = async () => {
-    try {
-      const categories = await productService.getCategories();
-      const categoryList = categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join('\n');
-      
-      setMessages(prevMessages => [
-        ...prevMessages,
-        { id: prevMessages.length + 1, sender: "user", message: "Show me the product categories" },
-        { 
-          id: prevMessages.length + 2, 
-          sender: "bot", 
-          message: `Here are our product categories:`,
-          content: <CategoryButtons categories={categories} onCategoryClick={handleCategoryClick} />
-        },
-      ]);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      setMessages(prevMessages => [
-        ...prevMessages,
-        { id: prevMessages.length + 1, sender: "user", message: "Show me the product categories" },
-        { 
-          id: prevMessages.length + 2, 
-          sender: "bot", 
-          message: "Sorry, I couldn't fetch the categories at the moment. Please try again later." 
-        },
-      ]);
-    }
-  };
-
-  const handleSupportClick = () => {
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { id: prevMessages.length + 1, sender: "user", message: "I need support" },
-      {
-        id: prevMessages.length + 2,
-        sender: "bot",
-        message: "I'm here to help! What do you need assistance with?",
-      },
-    ]);
-  };
-
-  const handleAction = async (action: any) => {
+  const handleAction = useCallback(async (action: any) => {
     if (action.type === 'SHOW_PRODUCTS') {
       const { category, productType, search, features, priceRange } = action.parameters;
       setSelectedCategory(category);
@@ -430,34 +450,16 @@ function Home() {
         priceRange
       });
     }
-  };
+  }, []);
 
-  const handleButtonClick = (buttonName: string) => {
-    if (!isChatStarted) {
-      setIsChatStarted(true);
-    }
-    
-    switch (buttonName.toLowerCase()) {
-      case "products":
-        handleProductsClick();
-        break;
-      case "categories":
-        handleCategoriesClick();
-        break;
-      case "support":
-        handleSupportClick();
-        break;
-    }
-  };
-
-  const handleUserMessage = async (message: string) => {
-    const userMessage = {
+  const handleUserMessage = useCallback(async (message: string) => {
+    const userMessage: Message = {
       id: messages.length + 1,
       sender: "user",
-      message: message,
+      message: message
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
 
     try {
@@ -467,7 +469,7 @@ function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: messages.concat(userMessage).map(msg => ({
+          messages: messages.concat(userMessage).map((msg) => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.message
           }))
@@ -480,7 +482,7 @@ function Home() {
 
       const result = await response.json();
       
-      const botResponse = {
+      const botResponse: Message = {
         id: messages.length + 2,
         sender: "bot",
         message: result.immediateResponse.message,
@@ -504,50 +506,48 @@ function Home() {
         }
       }
 
-      setMessages(prev => [...prev, botResponse]);
+      setMessages((prev) => [...prev, botResponse]);
     } catch (error) {
       console.error('Error:', error);
-      const errorResponse = {
+      const errorResponse: Message = {
         id: messages.length + 2,
         sender: "bot",
         message: "I apologize, but I'm having trouble processing your request. Could you please try again?",
       };
-      setMessages(prev => [...prev, errorResponse]);
+      setMessages((prev) => [...prev, errorResponse]);
     } finally {
       setIsTyping(false);
     }
-  };
+  }, [messages, handleCategoryClick]);
 
-  const handleInitialSubmit = (e: React.FormEvent) => {
+  const handleInitialSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
       setIsChatStarted(true);
       handleUserMessage(inputValue);
       setInputValue("");
     }
-  };
+  }, [inputValue, handleUserMessage]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isChatStarted) {
       setIsChatStarted(true);
     }
     if (inputValue.trim()) {
-      setIsLoading(true);
-      try {
-        handleUserMessage(inputValue);
-      } catch (error) {
-        console.error('Error processing message:', error);
-      } finally {
-        setIsLoading(false);
-      }
-      setInputValue("");
+      handleUserMessage(inputValue);
     }
-  };
+    setInputValue("");
+  }, [isChatStarted, inputValue, handleUserMessage]);
 
-  const startChat = () => {
+  const handleSampleQuestion = useCallback((question: string) => {
+    setInputValue(question);
+    handleUserMessage(question);
+  }, [handleUserMessage]);
+
+  const startChat = useCallback(() => {
     setIsChatStarted(true);
-  };
+  }, []);
 
   const sampleQuestions = [
     "What are the latest tech gadgets in stock?",
@@ -555,11 +555,6 @@ function Home() {
     "I'm looking for gaming accessories",
     "Help me find a laptop for work"
   ];
-
-  const handleSampleQuestion = (question: string) => {
-    setInputValue(question);
-    handleSubmit(new Event('submit') as any);
-  };
 
   return (
     <main className="container mx-auto p-4 min-h-[calc(100vh-3.5rem)] flex flex-col">
@@ -597,7 +592,7 @@ function Home() {
           <div className="max-w-2xl space-y-4 text-center">
             <h1 className="text-3xl font-bold">Welcome to TechShop Assistant</h1>
             <p className="text-muted-foreground">
-              I'm here to help you find the perfect products. How can I assist you today?
+              I&apos;m here to help you find the perfect products. How can I assist you today?
             </p>
           </div>
           
