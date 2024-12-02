@@ -37,6 +37,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Header } from "@/components/Header";
+import Image from 'next/image';
 
 interface Message {
   id: number;
@@ -75,10 +76,12 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
       </CardHeader>
       <CardContent>
         <div className="aspect-square relative mb-2 rounded-lg overflow-hidden">
-          <img
+          <Image
             src={product.imageUrl}
             alt={product.name}
-            className="object-contain w-full h-full"
+            className="object-contain"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
         <div className="flex justify-between items-start">
@@ -231,10 +234,12 @@ function ProductsDisplay({ category, searchFilters }: {
               </SheetHeader>
               <div className="p-4 space-y-4">
                 <div className="aspect-square relative rounded-lg overflow-hidden bg-muted">
-                  <img
+                  <Image
                     src={selectedProduct.imageUrl}
                     alt={selectedProduct.name}
-                    className="object-contain w-full h-full"
+                    className="object-contain"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </div>
                 <div className="space-y-2">
@@ -323,7 +328,7 @@ function Home() {
     return () => {
       window.removeEventListener('headerButtonClick', handleHeaderButtonClick as EventListener);
     };
-  }, []);
+  }, [handleHeaderButtonClick]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -577,7 +582,7 @@ function Home() {
                 </ul>
               </div>
               <p>
-                We're constantly adding new features to enhance your shopping experience!
+                We&apos;re constantly adding new features to enhance your shopping experience!
               </p>
             </div>
           </DialogHeader>
