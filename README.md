@@ -7,6 +7,9 @@ An AI-powered e-commerce platform built with Next.js 14, TypeScript, and Shadcn 
 - 📱 Responsive design
 - 🎨 Modern UI with Shadcn components
 
+## Demo
+Check out the live demo at: [https://conversational-shadcn.vercel.app](https://conversational-shadcn.vercel.app)
+
 ## Getting Started
 
 1. Clone the repository:
