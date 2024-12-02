@@ -318,12 +318,12 @@ function Home() {
   const [isChatStarted, setIsChatStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const handleHeaderButtonClick = (event: CustomEvent) => {
-      const buttonType = event.detail;
-      handleButtonClick(buttonType);
-    };
+  const handleHeaderButtonClick = useCallback((event: CustomEvent) => {
+    const buttonType = event.detail;
+    handleButtonClick(buttonType);
+  }, []);
 
+  useEffect(() => {
     window.addEventListener('headerButtonClick', handleHeaderButtonClick as EventListener);
     return () => {
       window.removeEventListener('headerButtonClick', handleHeaderButtonClick as EventListener);
