@@ -17,14 +17,11 @@ export class ActionOrchestrator {
       console.log('🔍 SHOW_PRODUCTS parameters:', parameters);
       const { category, limit, search, productType, features, priceRange } = parameters;
       
-      // Use the new filtered products method
+      // Use the search products method
       console.log('🎯 Filtering with productType:', productType);
-      return await productService.getFilteredProducts({
+      return await productService.searchProducts({
         category,
-        limit,
         search,
-        productType,
-        features,
         priceRange
       });
     });
