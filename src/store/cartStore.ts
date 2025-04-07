@@ -13,6 +13,9 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       cart: initialCart,
       itemCount: 0,
+      isOpen: false,
+
+      setIsOpen: (open: boolean) => set({ isOpen: open }),
 
       addItem: (product: Product, quantity: number = 1) => {
         const { cart } = get();
@@ -30,6 +33,7 @@ export const useCartStore = create<CartStore>()(
               total: calculateTotal(updatedItems),
             },
             itemCount: calculateItemCount(updatedItems),
+            isOpen: true, // Open cart when adding items
           });
         } else {
           const updatedItems = [...cart.items, { product, quantity }];
@@ -39,6 +43,7 @@ export const useCartStore = create<CartStore>()(
               total: calculateTotal(updatedItems),
             },
             itemCount: calculateItemCount(updatedItems),
+            isOpen: true, // Open cart when adding items
           });
         }
       },
@@ -81,6 +86,7 @@ export const useCartStore = create<CartStore>()(
         set({
           cart: initialCart,
           itemCount: 0,
+          isOpen: false, // Close cart when clearing
         });
       },
     }),

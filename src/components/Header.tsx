@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { ShoppingCart, Menu } from "lucide-react";
-import { Cart } from "./Cart";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useCartStore } from "../store/cartStore";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { Cart } from "./Cart";
 import {
   Sheet,
   SheetContent,
@@ -22,8 +22,7 @@ interface HeaderProps {
 }
 
 export function Header({ className }: HeaderProps) {
-  const { itemCount } = useCartStore();
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { itemCount, setIsOpen } = useCartStore();
   const { onButtonClick } = useNavigation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -59,12 +58,13 @@ export function Header({ className }: HeaderProps) {
           </div>
         </div>
 
+        {/* Cart and Mobile Menu */}
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
             className="relative"
-            onClick={() => setIsCartOpen(true)}
+            onClick={() => setIsOpen(true)}
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
@@ -104,7 +104,7 @@ export function Header({ className }: HeaderProps) {
           </Sheet>
         </div>
 
-        <Cart open={isCartOpen} onOpenChange={setIsCartOpen} />
+        <Cart />
       </div>
     </header>
   );

@@ -10,33 +10,36 @@ export interface ApiProduct {
   description: string;
   category: string;
   image: string;
-  rating: ProductRating;
+  rating: {
+    rate: number;
+    count: number;
+  };
 }
 
 // Our internal product model - this is what our app uses
 export interface Product {
   id: number;
-  name: string;
+  title: string;
   price: number;
   description: string;
   shortDescription: string;
   category: string;
-  status: "In Stock" | "Low Stock" | "Out of Stock";
+  status: string;
   specs: string[];
-  imageUrl: string;
-  rating: ProductRating;
+  image: string;
+  rating: {
+    rate: number;
+    count: number;
+  };
 }
 
 export interface FilterOptions {
-  productType?: string;
   category?: string;
-  search?: string;
-  features?: string[];
   priceRange?: {
     min?: number;
     max?: number;
   };
-  limit?: number;
+  search?: string;
 }
 
 // This helps us maintain flexibility if we switch APIs
@@ -45,5 +48,5 @@ export interface ProductService {
   getProduct(id: number): Promise<Product>;
   getCategories(): Promise<string[]>;
   getProductsByCategory(category: string): Promise<Product[]>;
-  getFilteredProducts(options: FilterOptions): Promise<Product[]>;
+  searchProducts(options: FilterOptions): Promise<Product[]>;
 }

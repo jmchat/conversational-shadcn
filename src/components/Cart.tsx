@@ -5,16 +5,14 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from 'next/image';
 
 interface CartProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
 }
 
-export function Cart({ open, onOpenChange }: CartProps) {
-  const { cart, removeItem, updateQuantity, clearCart } = useCartStore();
+export function Cart() {
+  const { cart, removeItem, updateQuantity, clearCart, isOpen, setIsOpen } = useCartStore();
 
   if (cart.items.length === 0) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="right" className="w-full sm:w-[440px]">
           <SheetHeader>
             <SheetTitle>Shopping Cart</SheetTitle>
@@ -24,7 +22,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
           </SheetHeader>
           <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
             <p className="text-muted-foreground">Your cart is empty</p>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
               Continue Shopping
             </Button>
           </div>
@@ -34,7 +32,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent side="right" className="w-full sm:w-[440px] flex flex-col">
         <SheetHeader>
           <SheetTitle>Shopping Cart</SheetTitle>
@@ -51,8 +49,8 @@ export function Cart({ open, onOpenChange }: CartProps) {
               >
                 <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted">
                   <Image
-                    src={item.product.imageUrl}
-                    alt={item.product.name}
+                    src={item.product.image}
+                    alt={item.product.title}
                     width={50}
                     height={50}
                     style={{ objectFit: 'contain' }}
@@ -60,7 +58,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-medium truncate">
-                    {item.product.name}
+                    {item.product.title}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     ${item.product.price}
@@ -106,7 +104,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
             </div>
             <div className="space-y-3">
               <Button className="w-full" size="lg">
-                Checkout
+                Go to Checkout
               </Button>
               <Button
                 variant="outline"
